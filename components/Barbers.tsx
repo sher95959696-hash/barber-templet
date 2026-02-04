@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Star, Award, ShieldCheck } from 'lucide-react';
+import { Star, Award, ShieldCheck, ChevronRight, MessageSquare, Instagram } from 'lucide-react';
 import { useAppContext } from '../store/AppContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,46 +9,54 @@ export const BarbersScreen: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-5 space-y-6 pb-32 animate-in fade-in duration-700">
       <div className="mb-2">
-        <h2 className="text-2xl font-bold text-white mb-2">Our Professionals</h2>
-        <p className="text-slate-400 text-sm">The best hands in the city at your service.</p>
+        <p className="text-amber-500 text-[9px] font-black uppercase tracking-[0.3em] mb-1">Elite Artisans</p>
+        <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">The Master Team</h2>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="space-y-4">
         {barbers.map(barber => (
-          <div key={barber.id} className="bg-slate-900 rounded-[2.5rem] overflow-hidden border border-slate-800 p-2 shadow-xl group">
-            <div className="flex flex-col md:flex-row gap-4 p-4">
-              <div className="relative">
-                <img src={barber.imageUrl} className="w-full md:w-32 h-48 md:h-32 rounded-3xl object-cover shadow-2xl" alt={barber.name} />
-                <div className="absolute bottom-2 right-2 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800 backdrop-blur-sm">
-                  <div className="flex items-center gap-1">
-                    <Star className="text-yellow-400 fill-yellow-400" size={14} />
-                    <span className="text-white text-xs font-bold">{barber.rating}</span>
-                  </div>
+          <div key={barber.id} className="glass-card rounded-[2.5rem] p-4 flex flex-col gap-4 group">
+            <div className="flex gap-4">
+              <div className="relative w-28 h-28 flex-shrink-0">
+                <img src={barber.imageUrl} className="w-full h-full rounded-2xl object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt={barber.name} />
+                <div className="absolute -bottom-2 -right-2 bg-amber-500 text-black px-2 py-1 rounded-lg flex items-center gap-1 shadow-lg">
+                  <Star size={10} fill="black" />
+                  <span className="text-[9px] font-black">{barber.rating}</span>
                 </div>
               </div>
-              <div className="flex-1 flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-xl font-bold text-white">{barber.name}</h3>
-                  <ShieldCheck size={16} className="text-blue-400" />
+              
+              <div className="flex-1 flex flex-col justify-center py-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-black text-white uppercase italic tracking-tight">{barber.name}</h3>
+                  <ShieldCheck size={14} className="text-blue-400" />
                 </div>
-                <p className="text-amber-400 text-sm font-black uppercase tracking-widest mb-3">{barber.specialty}</p>
+                <p className="text-amber-500 text-[9px] font-black uppercase tracking-[0.2em] mt-1">{barber.specialty}</p>
                 
-                <div className="flex gap-4 mb-4">
-                  <div className="flex items-center gap-1.5 text-slate-400">
-                    <Award size={14} />
-                    <span className="text-xs font-medium">{barber.experience} Exp</span>
+                <div className="mt-3 flex gap-3">
+                  <div className="flex items-center gap-1 text-zinc-500">
+                    <Award size={10} />
+                    <span className="text-[8px] font-black uppercase tracking-widest">{barber.experience} Exp</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-zinc-500">
+                    <MessageSquare size={10} />
+                    <span className="text-[8px] font-black uppercase tracking-widest">English, Urdu</span>
                   </div>
                 </div>
-
-                <button 
-                  onClick={() => navigate('/booking')}
-                  className="w-full py-3 rounded-2xl font-bold text-sm bg-slate-800 text-white hover:bg-slate-700 transition-colors active:scale-95 group-hover:bg-amber-400 group-hover:text-black"
-                >
-                  Book with {barber.name.split(' ')[0]}
-                </button>
               </div>
+            </div>
+
+            <div className="flex gap-2">
+               <button 
+                  onClick={() => navigate('/booking', { state: { barberId: barber.id } })}
+                  className="flex-1 py-3.5 bg-amber-500 text-black rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all"
+               >
+                 Reserve Slot
+               </button>
+               <button className="w-12 h-12 glass-card rounded-2xl flex items-center justify-center text-zinc-400">
+                 <Instagram size={18} />
+               </button>
             </div>
           </div>
         ))}
