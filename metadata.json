@@ -1,0 +1,7 @@
+{
+  "name": "BarberPro Mobile App Template",
+  "description": "A professional, high-fidelity mobile-first Barber/Salon application template with a built-in admin panel, booking system, and dynamic branding configuration.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
