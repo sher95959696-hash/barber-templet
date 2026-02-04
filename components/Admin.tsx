@@ -1,9 +1,23 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings, Plus, Trash2, Edit2, Layout as LayoutIcon, User, Scissors, Calendar, Save, ArrowLeft, Lock, LogOut, Eye, EyeOff, X, Check, Clock, Image as ImageIcon, Phone, MessageCircle, MapPin, TrendingUp, DollarSign, Tag, Upload, Loader2, Info, Bell, Wifi, WifiOff, Link } from 'lucide-react';
+import { Settings, Plus, Trash2, Edit2, User, Scissors, Calendar, Lock, LogOut, X, Check, Clock, Image as ImageIcon, Phone, MessageCircle, MapPin, Tag, Upload, Loader2, Smartphone, Type, Sparkles, Cloud } from 'lucide-react';
 import { useAppContext } from '../store/AppContext';
-import { isFirebaseConfigured } from '../firebase';
-import { Barber, BarberService, Offer, GalleryImage } from '../types';
+import { Barber, BarberService, Offer } from '../types';
+
+const Modal: React.FC<{ isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl">
+      <div className="w-full max-w-sm glass-card rounded-2xl p-5 space-y-5 animate-in zoom-in-95 duration-200 border-white/10">
+        <div className="flex justify-between items-center border-b border-white/5 pb-3">
+          <h3 className="text-[9px] font-black text-white uppercase italic tracking-widest">{title}</h3>
+          <button onClick={onClose} className="p-1.5 text-zinc-500"><X size={16} /></button>
+        </div>
+        <div className="max-h-[60vh] overflow-y-auto no-scrollbar pr-1">{children}</div>
+      </div>
+    </div>
+  );
+};
 
 const ImagePicker: React.FC<{ 
   currentUrl: string; 
@@ -11,19 +25,18 @@ const ImagePicker: React.FC<{
   label: string;
   cloudName?: string;
   uploadPreset?: string;
-}> = ({ currentUrl, onUpload, label, cloudName, uploadPreset }) => {
+  aspectRatio?: 'square' | 'wide';
+}> = ({ currentUrl, onUpload, label, cloudName, uploadPreset, aspectRatio = 'square' }) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [showUrlInput, setShowUrlInput] = useState(false);
-  const [manualUrl, setManualUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!cloudName || !uploadPreset || uploadPreset.trim() === "" || uploadPreset.includes("YOUR_")) {
-      alert("⚠️ SETUP ERROR\n\nPlease go to the 'Setup' tab and enter your Cloudinary Cloud Name and Unsigned Upload Preset first.");
-      setShowUrlInput(true);
+    if (!cloudName || !uploadPreset || uploadPreset.trim() === "") {
+      const url = prompt("Cloudinary keys missing. Please paste a direct Image URL:");
+      if (url) onUpload(url);
       return;
     }
 
@@ -33,180 +46,126 @@ const ImagePicker: React.FC<{
     formData.append('upload_preset', uploadPreset);
 
     try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      const data = await response.json();
-      
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: formData });
+      const data = await res.json();
       if (data.secure_url) {
         onUpload(data.secure_url);
       } else {
-        const errorMsg = data.error?.message || "Check if your Cloudinary preset is 'Unsigned'.";
-        alert(`❌ CLOUDINARY UPLOAD FAILED\n\nError: ${errorMsg}`);
-        setShowUrlInput(true);
+        alert("Upload Error: " + (data.error?.message || "Check your keys"));
       }
-    } catch (err: any) {
-      alert("❌ NETWORK ERROR\n\nCould not reach Cloudinary.");
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+    } catch (err) { alert("Upload Failed"); } finally { setIsUploading(false); }
   };
 
   return (
-    <div className="space-y-3 p-4 bg-zinc-900 rounded-2xl border border-white/5">
-      <div className="flex justify-between items-center">
-        <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{label}</label>
-        <button type="button" onClick={() => setShowUrlInput(!showUrlInput)} className="text-[10px] font-bold text-amber-500 flex items-center gap-1.5 hover:text-white transition-colors">
-          <Link size={12} /> {showUrlInput ? "Back to Upload" : "Paste URL"}
+    <div className="space-y-1.5">
+      <p className="text-[7px] font-black text-zinc-500 uppercase tracking-widest ml-1">{label}</p>
+      <div className="flex items-center gap-2.5">
+        <div className={`relative ${aspectRatio === 'wide' ? 'w-16 aspect-video' : 'w-12 h-12'} rounded-lg overflow-hidden glass-card flex items-center justify-center border-white/10`}>
+          {currentUrl ? <img src={currentUrl} className="w-full h-full object-cover" /> : <ImageIcon size={12} className="text-zinc-800" />}
+        </div>
+        <button 
+          onClick={() => fileInputRef.current?.click()}
+          className="flex-1 py-2 bg-zinc-900/50 rounded-lg text-[7px] font-black uppercase text-zinc-400 border border-white/5"
+        >
+          {isUploading ? "..." : "Upload Image"}
         </button>
+        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
       </div>
-      
-      {showUrlInput ? (
-        <div className="space-y-3">
-          <div className="flex gap-2">
-            <input 
-              value={manualUrl} 
-              onChange={(e) => setManualUrl(e.target.value)}
-              placeholder="Paste direct image link..." 
-              className="flex-1 bg-black border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-amber-500"
-            />
-            <button 
-              type="button" 
-              onClick={() => { if(manualUrl) { onUpload(manualUrl); setManualUrl(''); } setShowUrlInput(false); }}
-              className="px-4 bg-amber-500 text-black rounded-xl text-[10px] font-black uppercase"
-            >
-              Apply
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-4">
-          <div className="w-20 h-20 bg-black border border-white/10 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center relative shadow-lg">
-            {currentUrl ? (
-              <img src={currentUrl} className="w-full h-full object-cover" alt="Preview" />
-            ) : (
-              <ImageIcon size={24} className="text-zinc-700" />
-            )}
-            {isUploading && (
-              <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center gap-1">
-                <Loader2 size={20} className="text-amber-500 animate-spin" />
-              </div>
-            )}
-          </div>
-          <div className="flex-1">
-            <button 
-              type="button" 
-              onClick={() => fileInputRef.current?.click()} 
-              disabled={isUploading}
-              className="w-full py-4 bg-black border border-white/10 rounded-xl text-[10px] font-black text-white uppercase tracking-widest hover:border-amber-500 transition-all flex items-center justify-center gap-2"
-            >
-              <Upload size={14} className="text-zinc-500" />
-              {isUploading ? "Uploading..." : "Select File"}
-            </button>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
 export const AdminScreen: React.FC = () => {
   const { 
-    branding, services, barbers, appointments, gallery, offers, notifications, isDbConnected,
-    isAdminAuthenticated, loginAdmin, logoutAdmin,
-    updateBranding, updateService, deleteService, updateBarber, deleteBarber, updateAppointment, deleteOffer, updateOffer, addGalleryImage, deleteGalleryImage
+    branding, services, barbers, appointments, offers, isAdminAuthenticated, loginAdmin, logoutAdmin,
+    updateBranding, updateService, deleteService, updateBarber, deleteBarber, updateAppointment, updateOffer, deleteOffer
   } = useAppContext();
   
-  const [tab, setTab] = useState<'bookings' | 'branding' | 'services' | 'staff' | 'gallery' | 'offers'>('bookings');
+  const [tab, setTab] = useState<'bookings' | 'branding' | 'services' | 'staff' | 'offers'>('bookings');
   const [passwordInput, setPasswordInput] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
   const [editBranding, setEditBranding] = useState(branding);
 
-  useEffect(() => {
-    setEditBranding(branding);
+  // Forms State
+  const [showServiceForm, setShowServiceForm] = useState(false);
+  const [serviceForm, setServiceForm] = useState<Partial<BarberService>>({ category: 'Haircut', duration: 30 });
+  const [showStaffForm, setShowStaffForm] = useState(false);
+  const [staffForm, setStaffForm] = useState<Partial<Barber>>({ specialty: 'Master Stylist', available: true });
+  const [showOfferForm, setShowOfferForm] = useState(false);
+  const [offerForm, setOfferForm] = useState<Partial<Offer>>({});
+
+  useEffect(() => { 
+    // Clone to prevent circular references and maintain data integrity
+    setEditBranding(JSON.parse(JSON.stringify(branding))); 
   }, [branding]);
 
-  const [showServiceForm, setShowServiceForm] = useState(false);
-  const [editingService, setEditingService] = useState<BarberService | null>(null);
-  const [serviceImageUrl, setServiceImageUrl] = useState('');
+  const handleUpdateBranding = async () => {
+    const cleanData = JSON.parse(JSON.stringify(editBranding));
+    await updateBranding(cleanData);
+    alert("System Settings Updated!");
+  };
 
-  const [showOfferForm, setShowOfferForm] = useState(false);
-  const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
-  const [offerImageUrl, setOfferImageUrl] = useState('');
+  const saveService = async () => {
+    if (!serviceForm.name || !serviceForm.price) return alert("Fill required fields");
+    await updateService({ ...serviceForm, id: serviceForm.id || Math.random().toString(36).substr(2, 9) } as BarberService);
+    setShowServiceForm(false);
+  };
 
-  const [showStaffForm, setShowStaffForm] = useState(false);
-  const [editingStaff, setEditingStaff] = useState<Barber | null>(null);
-  const [staffImageUrl, setStaffImageUrl] = useState('');
+  const saveStaff = async () => {
+    if (!staffForm.name) return alert("Fill name");
+    await updateBarber({ ...staffForm, id: staffForm.id || Math.random().toString(36).substr(2, 9) } as Barber);
+    setShowStaffForm(false);
+  };
 
-  const handleSaveBranding = async () => {
-    try {
-      await updateBranding(editBranding);
-      alert("✅ BRANDING UPDATED!");
-    } catch (e) {
-      alert("❌ FAILED TO SAVE");
-    }
+  const saveOffer = async () => {
+    if (!offerForm.title || !offerForm.discount) return alert("Fill title and discount");
+    await updateOffer({ ...offerForm, id: offerForm.id || Math.random().toString(36).substr(2, 9) } as Offer);
+    setShowOfferForm(false);
   };
 
   if (!isAdminAuthenticated) {
     return (
-      <div className="min-h-full flex flex-col items-center justify-center p-8 bg-[#050505]">
-        <div className="w-24 h-24 bg-amber-500 rounded-[2rem] flex items-center justify-center mb-10 shadow-2xl">
-          <Lock size={44} className="text-black" />
+      <div className="min-h-full flex flex-col items-center justify-center p-8 bg-[#020202]">
+        <div className="w-14 h-14 bg-amber-500 rounded-xl flex items-center justify-center mb-5 shadow-2xl">
+          <Lock size={22} className="text-black" />
         </div>
-        <h2 className="text-3xl font-black text-white mb-8 tracking-tighter uppercase italic">HQ ACCESS</h2>
-        
-        <form onSubmit={(e) => { e.preventDefault(); if (!loginAdmin(passwordInput)) setError('Invalid Passcode'); }} className="w-full space-y-4 max-w-sm">
-          <div className="relative">
-            <input 
-              type={showPassword ? "text" : "password"} 
-              placeholder="Admin Passcode"
-              value={passwordInput}
-              onChange={(e) => setPasswordInput(e.target.value)}
-              className="w-full bg-zinc-900 border border-white/5 rounded-3xl py-5 px-6 text-white text-center focus:border-amber-500 outline-none font-bold"
-            />
-          </div>
-          {error && <p className="text-red-500 text-[10px] font-black uppercase text-center">{error}</p>}
-          <button type="submit" className="w-full py-5 bg-amber-500 text-black font-black rounded-3xl shadow-xl active:scale-95 uppercase tracking-widest">Login to Headquarters</button>
+        <h2 className="text-sm font-black text-white uppercase italic tracking-tighter mb-5">Admin Shield</h2>
+        <form onSubmit={(e) => { e.preventDefault(); loginAdmin(passwordInput); }} className="w-full space-y-2.5 max-w-xs">
+          <input 
+            type="password" 
+            placeholder="Security Pin"
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            className="w-full glass-card py-3.5 text-center text-white outline-none font-bold rounded-xl border-white/5 focus:border-amber-500/50 transition-all"
+          />
+          <button type="submit" className="w-full py-3.5 bg-amber-500 text-black font-black rounded-xl uppercase text-[8px] tracking-widest shadow-xl">Unlock Panel</button>
         </form>
       </div>
     );
   }
 
   return (
-    <div className="p-4 space-y-6 pb-24 animate-in fade-in duration-500 max-w-md mx-auto">
-      <div className="flex items-center justify-between">
+    <div className="p-3 space-y-4 max-w-md mx-auto animate-in fade-in duration-300 pb-24">
+      <header className="flex items-center justify-between px-1">
         <div>
-          <h2 className="text-2xl font-black text-white tracking-tight uppercase italic">Admin HQ</h2>
-          <div className="flex items-center gap-1.5 mt-1">
-             {isDbConnected ? (
-               <div className="flex items-center gap-1 text-[8px] font-black text-green-500 uppercase tracking-widest"><Wifi size={10} /> Live Connection</div>
-             ) : (
-               <div className="flex items-center gap-1 text-[8px] font-black text-red-500 uppercase tracking-widest"><WifiOff size={10} /> Disconnected</div>
-             )}
-          </div>
+           <h2 className="text-sm font-black text-white italic uppercase tracking-tighter leading-none">Command Center</h2>
+           <p className="text-[6px] font-black text-zinc-500 uppercase tracking-widest leading-none mt-1.5">Full System Access</p>
         </div>
-        <button onClick={logoutAdmin} className="p-3 text-red-500 bg-red-500/10 rounded-2xl"><LogOut size={20} /></button>
-      </div>
+        <button onClick={logoutAdmin} className="p-2 text-red-500 glass-card rounded-lg border-red-500/10 active:scale-90 transition-all"><LogOut size={14} /></button>
+      </header>
 
-      <div className="flex gap-2 overflow-x-auto pb-4 sticky top-0 bg-[#020202]/95 backdrop-blur-md z-40 -mx-4 px-4 pt-2 no-scrollbar border-b border-white/5">
+      <div className="flex gap-1 overflow-x-auto pb-1.5 sticky top-0 bg-[#020202] z-50 -mx-3 px-3 no-scrollbar border-b border-white/5">
         {[
-          { id: 'bookings', label: 'All Orders', icon: <Calendar size={14} /> },
-          { id: 'services', label: 'Services', icon: <Scissors size={14} /> },
-          { id: 'staff', label: 'Staff', icon: <User size={14} /> },
-          { id: 'offers', label: 'Deals', icon: <Tag size={14} /> },
-          { id: 'gallery', label: 'Gallery', icon: <ImageIcon size={14} /> },
-          { id: 'branding', label: 'Setup', icon: <Settings size={14} /> },
+          { id: 'bookings', label: 'Queues', icon: <Calendar size={10} /> },
+          { id: 'services', label: 'Menu', icon: <Scissors size={10} /> },
+          { id: 'staff', label: 'Staff', icon: <User size={10} /> },
+          { id: 'offers', label: 'Deals', icon: <Tag size={10} /> },
+          { id: 'branding', label: 'Visuals', icon: <Smartphone size={10} /> },
         ].map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id as any)}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-[9px] font-black transition-all whitespace-nowrap uppercase tracking-widest border ${
-              tab === t.id ? 'bg-amber-500 text-black border-amber-500 shadow-xl' : 'bg-zinc-900 text-zinc-500 border-white/5'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[6px] font-black uppercase tracking-widest border transition-all whitespace-nowrap ${
+              tab === t.id ? 'bg-amber-500 text-black border-amber-500 shadow-lg' : 'bg-zinc-900 text-zinc-500 border-white/5'
             }`}
           >
             {t.icon} {t.label}
@@ -215,132 +174,247 @@ export const AdminScreen: React.FC = () => {
       </div>
 
       {tab === 'bookings' && (
-        <div className="space-y-4">
-           {appointments.length === 0 ? (
-             <div className="p-20 text-center text-zinc-700 font-black uppercase text-xs tracking-widest">No Bookings Yet</div>
-           ) : (
-             appointments.map(apt => (
-              <div key={apt.id} className="p-6 bg-zinc-900 rounded-[2.2rem] border border-white/5 space-y-4 shadow-xl">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="text-white font-black text-lg uppercase italic">{apt.customerName}</h4>
-                    <p className="text-amber-500 text-xs font-bold">{apt.customerPhone}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => updateAppointment(apt.id, 'confirmed')} className={`p-3 rounded-xl ${apt.status === 'confirmed' ? 'bg-green-500 text-white' : 'bg-zinc-800 text-green-500'}`}><Check size={18} /></button>
-                    <button onClick={() => updateAppointment(apt.id, 'cancelled')} className={`p-3 rounded-xl ${apt.status === 'cancelled' ? 'bg-red-500 text-white' : 'bg-zinc-800 text-red-500'}`}><X size={18} /></button>
-                  </div>
+        <div className="space-y-2">
+          {appointments.length === 0 && <p className="text-center text-zinc-600 py-20 text-[7px] uppercase font-black tracking-widest">No Bookings Found</p>}
+          {appointments.map(apt => (
+            <div key={apt.id} className="p-3 glass-card rounded-xl space-y-2.5 border-white/5 shadow-md">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="text-white font-black text-[9px] uppercase italic leading-none">{apt.customerName}</h4>
+                  <p className="text-amber-500 text-[7px] font-bold mt-1.5 leading-none">{apt.customerPhone}</p>
                 </div>
-                <div className="pt-4 border-t border-white/5 flex justify-between items-center">
-                  <div>
-                    <p className="text-white font-bold text-xs">{services.find(s => s.id === apt.serviceId)?.name || 'Custom Grooming'}</p>
-                    <p className="text-zinc-500 text-[10px] font-black uppercase tracking-tighter mt-1">{barbers.find(b => b.id === apt.barberId)?.name || 'Any Barber'}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-white font-bold text-[10px] uppercase">{apt.date}</p>
-                    <p className="text-zinc-500 text-[9px] font-bold">{apt.time}</p>
-                  </div>
+                <div className="flex gap-1">
+                  <button onClick={() => updateAppointment(apt.id, 'confirmed')} className={`p-1.5 rounded-md ${apt.status === 'confirmed' ? 'bg-green-500 text-black' : 'bg-zinc-800 text-green-500'}`}><Check size={12} /></button>
+                  <button onClick={() => updateAppointment(apt.id, 'cancelled')} className={`p-1.5 rounded-md ${apt.status === 'cancelled' ? 'bg-red-500 text-black' : 'bg-zinc-800 text-red-500'}`}><X size={12} /></button>
                 </div>
               </div>
-            ))
-           )}
+              <div className="text-[7px] font-black text-zinc-500 flex justify-between border-t border-white/5 pt-2 uppercase italic">
+                <span>{services.find(s => s.id === apt.serviceId)?.name}</span>
+                <span className="text-white">{apt.date} • {apt.time}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'services' && (
+        <div className="space-y-2">
+          <button onClick={() => { setServiceForm({ category: 'Haircut', duration: 30 }); setShowServiceForm(true); }} className="w-full py-3.5 glass-card border-dashed text-[7px] font-black uppercase text-amber-500 flex items-center justify-center gap-1.5 rounded-xl border-white/5 bg-amber-500/5">
+            <Plus size={14} /> Add Service
+          </button>
+          {services.map(s => (
+            <div key={s.id} className="p-2 glass-card rounded-xl flex items-center justify-between border-white/5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <img src={s.imageUrl} className="w-8 h-8 rounded-lg object-cover" />
+                <div>
+                   <p className="text-white font-black text-[8px] uppercase italic leading-none">{s.name}</p>
+                   <p className="text-amber-500 text-[7px] font-black mt-1 leading-none">{branding.currency} {s.price}</p>
+                </div>
+              </div>
+              <div className="flex gap-0.5">
+                <button onClick={() => { setServiceForm(s); setShowServiceForm(true); }} className="p-2 text-zinc-500"><Edit2 size={12} /></button>
+                <button onClick={() => deleteService(s.id)} className="p-2 text-red-500/30"><Trash2 size={12} /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'staff' && (
+        <div className="space-y-2">
+          <button onClick={() => { setStaffForm({ specialty: 'Master Stylist', available: true }); setShowStaffForm(true); }} className="w-full py-3.5 glass-card border-dashed text-[7px] font-black uppercase text-blue-500 flex items-center justify-center gap-1.5 rounded-xl border-white/5 bg-blue-500/5">
+            <Plus size={14} /> Add Staff
+          </button>
+          {barbers.map(b => (
+            <div key={b.id} className="p-2 glass-card rounded-xl flex items-center justify-between border-white/5">
+              <div className="flex items-center gap-3">
+                <img src={b.imageUrl} className="w-8 h-8 rounded-lg object-cover grayscale" />
+                <div>
+                   <p className="text-white font-black text-[8px] uppercase italic leading-none">{b.name}</p>
+                   <p className="text-zinc-500 text-[7px] font-bold mt-1 leading-none uppercase tracking-widest">{b.specialty}</p>
+                </div>
+              </div>
+              <div className="flex gap-0.5">
+                <button onClick={() => { setStaffForm(b); setShowStaffForm(true); }} className="p-2 text-zinc-500"><Edit2 size={12} /></button>
+                <button onClick={() => deleteBarber(b.id)} className="p-2 text-red-500/30"><Trash2 size={12} /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'offers' && (
+        <div className="space-y-2">
+          <button onClick={() => { setOfferForm({}); setShowOfferForm(true); }} className="w-full py-3.5 glass-card border-dashed text-[7px] font-black uppercase text-orange-500 flex items-center justify-center gap-1.5 rounded-xl border-white/5 bg-orange-500/5">
+            <Plus size={14} /> Add Offer
+          </button>
+          {offers.map(o => (
+            <div key={o.id} className="p-2 glass-card rounded-xl flex items-center justify-between border-white/5">
+              <div className="flex items-center gap-3">
+                <img src={o.imageUrl} className="w-8 h-8 rounded-lg object-cover" />
+                <div><p className="text-white font-black text-[8px] uppercase italic">{o.title}</p><p className="text-amber-500 text-[7px] font-black mt-1">{o.discount}</p></div>
+              </div>
+              <div className="flex gap-0.5">
+                <button onClick={() => { setOfferForm(o); setShowOfferForm(true); }} className="p-2 text-zinc-500"><Edit2 size={12} /></button>
+                <button onClick={() => deleteOffer(o.id)} className="p-2 text-red-500/30"><Trash2 size={12} /></button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       {tab === 'branding' && (
-        <div className="space-y-6">
-          <ImagePicker 
-            label="App Icon / Logo"
-            currentUrl={editBranding.logoUrl}
-            cloudName={branding.cloudinaryCloudName}
-            uploadPreset={branding.cloudinaryUploadPreset}
-            onUpload={(url) => setEditBranding({...editBranding, logoUrl: url})}
-          />
-          <div className="space-y-4">
-             <div className="space-y-2">
-                <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest ml-1">App Business Name</p>
-                <input value={editBranding.shopName} onChange={(e) => setEditBranding({...editBranding, shopName: e.target.value})} className="w-full bg-zinc-900 border border-white/5 rounded-2xl p-4 text-white font-bold focus:border-amber-500 outline-none transition-all" placeholder="Enter Shop Name" />
-                <p className="text-[7px] text-zinc-600 ml-1 italic">This name appears during the app start animation.</p>
-             </div>
-             <div className="space-y-2">
-                <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest ml-1">Marketing Slogan</p>
-                <input value={editBranding.shopSlogan} onChange={(e) => setEditBranding({...editBranding, shopSlogan: e.target.value})} className="w-full bg-zinc-900 border border-white/5 rounded-2xl p-4 text-white font-bold focus:border-amber-500 outline-none transition-all" placeholder="Enter App Slogan" />
-                <p className="text-[7px] text-zinc-600 ml-1 italic">Short sentence below the name in the splash screen.</p>
-             </div>
-             <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest ml-1">Currency Symbol</p>
-                  <input value={editBranding.currency} onChange={(e) => setEditBranding({...editBranding, currency: e.target.value})} className="w-full bg-zinc-900 border border-white/5 rounded-2xl p-4 text-white focus:border-amber-500 outline-none" placeholder="PKR" />
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest ml-1">Admin Passcode</p>
-                  <input value={editBranding.adminPassword} onChange={(e) => setEditBranding({...editBranding, adminPassword: e.target.value})} className="w-full bg-zinc-900 border border-white/5 rounded-2xl p-4 text-white focus:border-amber-500 outline-none" placeholder="1234" />
-                </div>
-             </div>
+        <div className="space-y-6 pb-12 animate-in slide-in-from-bottom-2 duration-300">
+          
+          <div className="grid grid-cols-2 gap-3">
+            <ImagePicker 
+              label="App Logo" 
+              currentUrl={editBranding.logoUrl} 
+              onUpload={(url) => setEditBranding({...editBranding, logoUrl: url})} 
+              cloudName={editBranding.cloudinaryCloudName} 
+              uploadPreset={editBranding.cloudinaryUploadPreset} 
+            />
+            <ImagePicker 
+              label="Hero Image" 
+              currentUrl={editBranding.heroImageUrl} 
+              onUpload={(url) => setEditBranding({...editBranding, heroImageUrl: url})} 
+              cloudName={editBranding.cloudinaryCloudName} 
+              uploadPreset={editBranding.cloudinaryUploadPreset} 
+              aspectRatio="wide" 
+            />
           </div>
-          <div className="p-5 bg-zinc-900 border border-white/5 rounded-2xl space-y-4">
-            <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Cloudinary Integration</h4>
-            <input value={editBranding.cloudinaryCloudName} onChange={(e) => setEditBranding({...editBranding, cloudinaryCloudName: e.target.value})} className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-xs" placeholder="Cloud Name" />
-            <input value={editBranding.cloudinaryUploadPreset} onChange={(e) => setEditBranding({...editBranding, cloudinaryUploadPreset: e.target.value})} className="w-full bg-black border border-white/10 rounded-xl p-3 text-white text-xs" placeholder="Upload Preset (Unsigned)" />
-          </div>
-          <button onClick={handleSaveBranding} className="w-full py-5 bg-amber-500 text-black font-black rounded-[2rem] shadow-xl uppercase tracking-widest text-xs active:scale-95 transition-all">Update App Branding</button>
-        </div>
-      )}
 
-      {(tab === 'services' || tab === 'staff' || tab === 'offers' || tab === 'gallery') && (
-        <div className="space-y-4">
-          {tab !== 'gallery' && (
-             <button 
-               onClick={() => {
-                 if (tab === 'services') { setEditingService(null); setServiceImageUrl(''); setShowServiceForm(true); }
-                 if (tab === 'staff') { setEditingStaff(null); setStaffImageUrl(''); setShowStaffForm(true); }
-                 if (tab === 'offers') { setEditingOffer(null); setOfferImageUrl(''); setShowOfferForm(true); }
-               }}
-               className="w-full py-6 bg-zinc-900 border-2 border-white/5 border-dashed rounded-[2.2rem] text-zinc-500 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3"
-             >
-               <Plus size={20} /> Add New Entry
-             </button>
-          )}
-           
-           <div className="space-y-3">
-             {tab === 'services' && services.map(s => (
-               <div key={s.id} className="p-4 bg-zinc-900 border border-white/5 rounded-3xl flex items-center justify-between shadow-xl">
-                 <div className="flex items-center gap-4">
-                    <img src={s.imageUrl} className="w-16 h-16 rounded-2xl object-cover border border-white/5" alt="" />
-                    <div><p className="text-white font-black text-sm italic uppercase">{s.name}</p><p className="text-amber-500 text-[10px] font-black uppercase">{branding.currency} {s.price}</p></div>
-                 </div>
-                 <div className="flex gap-1">
-                    <button onClick={() => { setEditingService(s); setServiceImageUrl(s.imageUrl || ''); setShowServiceForm(true); }} className="p-2.5 text-zinc-500"><Edit2 size={18} /></button>
-                    <button onClick={() => deleteService(s.id)} className="p-2.5 text-red-500/50"><Trash2 size={18} /></button>
-                 </div>
-               </div>
-             ))}
-
-             {tab === 'gallery' && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    {gallery.map(img => (
-                      <div key={img.id} className="relative aspect-square rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl group">
-                        <img src={img.url} className="w-full h-full object-cover" alt="" />
-                        <button onClick={() => deleteGalleryImage(img.id)} className="absolute top-3 right-3 p-3 bg-red-500 text-white rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14} /></button>
-                      </div>
-                    ))}
-                  </div>
-                  <ImagePicker 
-                    currentUrl=""
-                    label="Portfolio Upload"
-                    cloudName={branding.cloudinaryCloudName}
-                    uploadPreset={branding.cloudinaryUploadPreset}
-                    onUpload={async (url) => {
-                       await addGalleryImage(url);
-                       alert("✅ Portfolio look added!");
-                    }}
+          {/* 🛠 CLOUDINARY CONFIG SECTION */}
+          <div className="space-y-2 border-t border-white/5 pt-4">
+             <div className="flex items-center gap-2 mb-2">
+                <Cloud size={10} className="text-blue-400" />
+                <p className="text-[7px] font-black text-blue-400 uppercase tracking-widest">Cloud Infrastructure</p>
+             </div>
+             <div className="grid grid-cols-2 gap-2.5">
+                <div className="space-y-1">
+                  <p className="text-[6px] font-black text-zinc-500 uppercase ml-1">Cloud Name</p>
+                  <input 
+                    value={editBranding.cloudinaryCloudName || ''} 
+                    onChange={(e) => setEditBranding({...editBranding, cloudinaryCloudName: e.target.value})} 
+                    placeholder="Enter Cloud Name"
+                    className="w-full glass-card p-3 rounded-lg text-white outline-none font-bold text-[8px] placeholder:text-zinc-800" 
                   />
                 </div>
-             )}
-           </div>
+                <div className="space-y-1">
+                  <p className="text-[6px] font-black text-zinc-500 uppercase ml-1">Upload Preset</p>
+                  <input 
+                    value={editBranding.cloudinaryUploadPreset || ''} 
+                    onChange={(e) => setEditBranding({...editBranding, cloudinaryUploadPreset: e.target.value})} 
+                    placeholder="Enter Preset"
+                    className="w-full glass-card p-3 rounded-lg text-white outline-none font-bold text-[8px] placeholder:text-zinc-800" 
+                  />
+                </div>
+             </div>
+          </div>
+
+          <div className="space-y-4 border-t border-white/5 pt-4">
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="space-y-1">
+                <p className="text-[6px] font-black text-zinc-500 uppercase ml-1 tracking-widest">Shop Name</p>
+                <input value={editBranding.shopName} onChange={(e) => setEditBranding({...editBranding, shopName: e.target.value})} className="w-full glass-card p-3 rounded-lg text-white outline-none font-bold text-[9px]" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-[6px] font-black text-zinc-500 uppercase ml-1 tracking-widest">Currency</p>
+                <input value={editBranding.currency} onChange={(e) => setEditBranding({...editBranding, currency: e.target.value})} className="w-full glass-card p-3 rounded-lg text-white text-[9px]" />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-[6px] font-black text-zinc-500 uppercase ml-1 tracking-widest">Hero Slogan</p>
+              <textarea value={editBranding.shopSlogan} onChange={(e) => setEditBranding({...editBranding, shopSlogan: e.target.value})} className="w-full glass-card p-3 rounded-lg text-white outline-none font-bold h-12 text-[9px]" />
+            </div>
+
+            <div className="space-y-2">
+               <p className="text-[7px] font-black text-zinc-500 uppercase tracking-widest border-b border-white/5 pb-1">Stats Monitoring</p>
+               <div className="grid grid-cols-3 gap-1.5">
+                 {(editBranding.stats || []).map((s, i) => (
+                   <div key={i} className="space-y-1 glass-card p-2 rounded-lg">
+                      <input value={s.label} onChange={(e) => {
+                        const ns = [...editBranding.stats]; ns[i].label = e.target.value; setEditBranding({...editBranding, stats: ns});
+                      }} className="w-full bg-transparent text-[5px] text-zinc-500 uppercase font-black outline-none border-b border-white/5 mb-0.5" />
+                      <input value={s.value} onChange={(e) => {
+                        const ns = [...editBranding.stats]; ns[i].value = e.target.value; setEditBranding({...editBranding, stats: ns});
+                      }} className="w-full bg-transparent text-[8px] text-white font-black outline-none" />
+                   </div>
+                 ))}
+               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+               <div className="space-y-1">
+                 <p className="text-[6px] font-black text-zinc-500 uppercase ml-1">Office Phone</p>
+                 <input value={editBranding.contactPhone} onChange={(e) => setEditBranding({...editBranding, contactPhone: e.target.value})} className="w-full glass-card p-3 rounded-lg text-white text-[9px]" />
+               </div>
+               <div className="space-y-1">
+                 <p className="text-[6px] font-black text-zinc-500 uppercase ml-1">WhatsApp</p>
+                 <input value={editBranding.whatsappNumber} onChange={(e) => setEditBranding({...editBranding, whatsappNumber: e.target.value})} className="w-full glass-card p-3 rounded-lg text-white text-[9px]" />
+               </div>
+            </div>
+            
+            <div className="space-y-1">
+              <p className="text-[6px] font-black text-zinc-500 uppercase ml-1 tracking-widest">Shop Address</p>
+              <input value={editBranding.address} onChange={(e) => setEditBranding({...editBranding, address: e.target.value})} className="w-full glass-card p-3 rounded-lg text-white outline-none font-bold text-[9px]" />
+            </div>
+          </div>
+
+          <button onClick={handleUpdateBranding} className="w-full py-4 bg-amber-500 text-black font-black rounded-xl text-[8px] uppercase tracking-[0.25em] shadow-2xl shadow-amber-500/20 active:scale-95 transition-all">Publish Global Changes</button>
         </div>
       )}
+
+      {/* FORM MODALS */}
+      <Modal isOpen={showServiceForm} onClose={() => setShowServiceForm(false)} title="Menu Service">
+        <div className="space-y-4">
+          <ImagePicker 
+            label="Service Photo" 
+            currentUrl={serviceForm.imageUrl || ''} 
+            onUpload={(url) => setServiceForm({...serviceForm, imageUrl: url})} 
+            cloudName={editBranding.cloudinaryCloudName} 
+            uploadPreset={editBranding.cloudinaryUploadPreset} 
+          />
+          <input placeholder="Service Name" className="w-full glass-card p-3 rounded-xl outline-none text-[9px]" value={serviceForm.name || ''} onChange={(e) => setServiceForm({...serviceForm, name: e.target.value})} />
+          <div className="grid grid-cols-2 gap-2.5">
+            <input type="number" placeholder="Price" className="w-full glass-card p-3 rounded-xl outline-none text-[9px]" value={serviceForm.price || ''} onChange={(e) => setServiceForm({...serviceForm, price: parseInt(e.target.value)})} />
+            <input type="number" placeholder="Mins" className="w-full glass-card p-3 rounded-xl outline-none text-[9px]" value={serviceForm.duration || ''} onChange={(e) => setServiceForm({...serviceForm, duration: parseInt(e.target.value)})} />
+          </div>
+          <button onClick={saveService} className="w-full py-3.5 bg-amber-500 text-black font-black rounded-xl uppercase text-[8px] tracking-widest shadow-lg">Confirm & Sync</button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showOfferForm} onClose={() => setShowOfferForm(false)} title="New Deal">
+        <div className="space-y-4">
+          <ImagePicker 
+            label="Deal Banner" 
+            currentUrl={offerForm.imageUrl || ''} 
+            onUpload={(url) => setOfferForm({...offerForm, imageUrl: url})} 
+            cloudName={editBranding.cloudinaryCloudName} 
+            uploadPreset={editBranding.cloudinaryUploadPreset} 
+            aspectRatio="wide" 
+          />
+          <input placeholder="Title" className="w-full glass-card p-3 rounded-xl outline-none text-[9px]" value={offerForm.title || ''} onChange={(e) => setOfferForm({...offerForm, title: e.target.value})} />
+          <input placeholder="Discount (e.g. 30%)" className="w-full glass-card p-3 rounded-xl outline-none text-[9px]" value={offerForm.discount || ''} onChange={(e) => setOfferForm({...offerForm, discount: e.target.value})} />
+          <button onClick={saveOffer} className="w-full py-3.5 bg-amber-500 text-black font-black rounded-xl uppercase text-[8px] tracking-widest shadow-lg">Activate Offer</button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showStaffForm} onClose={() => setShowStaffForm(false)} title="Artisan Profile">
+        <div className="space-y-4">
+          <ImagePicker 
+            label="Portfolio Photo" 
+            currentUrl={staffForm.imageUrl || ''} 
+            onUpload={(url) => setStaffForm({...staffForm, imageUrl: url})} 
+            cloudName={editBranding.cloudinaryCloudName} 
+            uploadPreset={editBranding.cloudinaryUploadPreset} 
+          />
+          <input placeholder="Staff Name" className="w-full glass-card p-3 rounded-xl outline-none text-[9px]" value={staffForm.name || ''} onChange={(e) => setStaffForm({...staffForm, name: e.target.value})} />
+          <input placeholder="Specialty" className="w-full glass-card p-3 rounded-xl outline-none text-[9px]" value={staffForm.specialty || ''} onChange={(e) => setStaffForm({...staffForm, specialty: e.target.value})} />
+          <button onClick={saveStaff} className="w-full py-3.5 bg-amber-500 text-black font-black rounded-xl uppercase text-[8px] tracking-widest shadow-lg">Sync Roster</button>
+        </div>
+      </Modal>
     </div>
   );
 };
