@@ -2,13 +2,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Phone, MessageCircle, Star, Clock, MapPin, Scissors, Calendar, 
-  Users, Award, ChevronRight, Zap, Crown, ArrowUpRight, Sparkles, Tag
+  Phone, MessageCircle, MapPin, Zap, Crown, ArrowUpRight, Tag
 } from 'lucide-react';
 import { useAppContext } from '../store/AppContext';
 
 export const HomeScreen: React.FC = () => {
-  const { branding, barbers, services, offers } = useAppContext();
+  const { branding, barbers, services, offers, theme } = useAppContext();
   const navigate = useNavigate();
 
   const getWhatsAppLink = (num: string) => {
@@ -17,70 +16,74 @@ export const HomeScreen: React.FC = () => {
   };
 
   return (
-    <div className="space-y-3 animate-in fade-in duration-500 pb-28">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-28">
       
-      {/* 1. SLIM HERO */}
-      <section className="relative h-[280px] w-full overflow-hidden">
+      {/* 1. PREMIUM HERO */}
+      <section className="relative h-[360px] w-full overflow-hidden">
         <img src={branding.heroImageUrl} className="absolute inset-0 w-full h-full object-cover" alt="Hero" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-[#020202]" />
+        <div className={`absolute inset-0 bg-gradient-to-b ${theme === 'dark' ? 'from-black/70 via-transparent to-[#020202]' : 'from-black/40 via-transparent to-slate-50'}`} />
         
-        <div className="absolute top-4 inset-x-4 flex justify-between items-center z-30">
-           <div className="flex items-center gap-2">
-              <div className="w-7 h-7 glass-card rounded-lg flex items-center justify-center border-white/10 p-1">
+        <div className="absolute top-4 inset-x-5 flex justify-between items-center z-30">
+           <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center border shadow-xl p-1.5 ${theme === 'dark' ? 'glass-card border-white/10' : 'bg-white border-slate-200'}`}>
                  <img src={branding.logoUrl} className="w-full h-full object-contain" alt="" />
               </div>
-              <span className="text-[8px] font-black text-white uppercase italic tracking-tighter">{branding.shopName}</span>
+              <span className={`text-[10px] font-black uppercase italic tracking-widest ${theme === 'dark' ? 'text-white' : 'text-white drop-shadow-md'}`}>{branding.shopName}</span>
            </div>
-           <div className="px-2 py-0.5 glass-card rounded-full border-green-500/20 flex items-center gap-1">
-             <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
-             <span className="text-[5px] font-black text-white uppercase">Live</span>
+           <div className={`px-3 py-1 glass-card rounded-full border flex items-center gap-2 ${theme === 'dark' ? 'border-green-500/20' : 'bg-white border-green-500/30'}`}>
+             <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+             <span className={`text-[9px] font-black uppercase tracking-widest ${theme === 'dark' ? 'text-white' : 'text-green-700'}`}>Live</span>
            </div>
         </div>
 
-        <div className="absolute bottom-4 inset-x-5 space-y-1.5 z-20">
-          <h1 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">
+        <div className="absolute bottom-6 inset-x-6 space-y-2.5 z-20">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500 rounded-lg">
+             <Crown size={12} className="text-black" />
+             <span className="text-[9px] font-black text-black uppercase tracking-widest">Master Studio</span>
+          </div>
+          <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter leading-none drop-shadow-2xl">
             {branding.shopName.split(' ')[0]} <span className="text-amber-500">{branding.shopName.split(' ')[1] || ""}</span>
           </h1>
-          <p className="text-zinc-400 text-[7px] font-bold uppercase tracking-[0.2em] leading-tight max-w-[180px]">
+          <p className="text-zinc-200 text-[11px] font-bold uppercase tracking-[0.2em] leading-relaxed max-w-[260px]">
             {branding.shopSlogan}
           </p>
-          <div className="flex gap-2 pt-1">
-            <button onClick={() => navigate('/booking')} className="flex-1 py-2.5 bg-amber-500 text-black font-black rounded-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 uppercase tracking-widest text-[7px]">
-              Book Now <ArrowUpRight size={10} />
+          <div className="flex gap-3 pt-2">
+            <button onClick={() => navigate('/booking')} className="flex-1 py-3.5 bg-amber-500 text-black font-black rounded-2xl active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-[10px] shadow-xl">
+              Book Seat <ArrowUpRight size={14} />
             </button>
-            <button onClick={() => navigate('/services')} className="w-9 h-9 glass-card rounded-lg flex items-center justify-center text-white border-white/10">
-              <Zap size={12} className="text-amber-500" />
+            <button onClick={() => navigate('/services')} className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all ${theme === 'dark' ? 'glass-card border-white/10 text-amber-500' : 'bg-white border-slate-200 text-amber-600 shadow-md'}`}>
+              <Zap size={18} />
             </button>
           </div>
         </div>
       </section>
 
-      {/* 2. DENSE STATS */}
-      <section className="px-4 -mt-8 relative z-30">
-        <div className="glass-card rounded-xl p-2.5 grid grid-cols-3 gap-1 border-white/10 shadow-xl backdrop-blur-3xl">
+      {/* 2. STATS */}
+      <section className="px-6 -mt-10 relative z-30">
+        <div className={`rounded-2xl p-4 grid grid-cols-3 gap-3 border shadow-xl backdrop-blur-3xl transition-all duration-500 ${theme === 'dark' ? 'bg-zinc-900/90 border-white/10' : 'bg-white/90 border-slate-200'}`}>
            {(branding.stats || []).map((s, i) => (
-             <div key={i} className="flex flex-col items-center text-center border-r border-white/5 last:border-0 py-0.5">
-                <span className="text-[10px] font-black text-white italic tracking-tighter leading-none">{s.value}</span>
-                <span className="text-[5px] font-black text-zinc-500 uppercase tracking-widest mt-1 leading-none">{s.label}</span>
+             <div key={i} className={`flex flex-col items-center text-center border-r last:border-0 py-1 ${theme === 'dark' ? 'border-white/5' : 'border-slate-100'}`}>
+                <span className={`text-base font-black italic tracking-tighter leading-none ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{s.value}</span>
+                <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mt-1.5 leading-none">{s.label}</span>
              </div>
            ))}
         </div>
       </section>
 
-      {/* 3. HORIZONTAL OFFERS */}
+      {/* 3. OFFERS - Headings Choti Kro */}
       {offers.length > 0 && (
-        <section className="space-y-1.5">
-          <div className="px-5 flex items-center justify-between">
-             <h3 className="text-[7px] font-black text-white/40 uppercase tracking-[0.2em]">Active Deals</h3>
-             <Tag size={8} className="text-amber-500" />
+        <section className="space-y-3">
+          <div className="px-8 flex items-center justify-between">
+             <h3 className={`text-[9px] font-black uppercase tracking-[0.3em] ${theme === 'dark' ? 'text-white/40' : 'text-slate-400'}`}>Active Deals</h3>
+             <Tag size={12} className="text-amber-500" />
           </div>
-          <div className="flex gap-2.5 overflow-x-auto px-4 pb-1 no-scrollbar snap-x">
+          <div className="flex gap-4 overflow-x-auto px-6 pb-2 no-scrollbar snap-x">
             {offers.map(offer => (
-              <div key={offer.id} className="min-w-[220px] h-24 relative rounded-xl overflow-hidden glass-card border-white/5 snap-center">
-                <img src={offer.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-20" alt="" />
-                <div className="absolute inset-0 p-3.5 flex flex-col justify-center">
-                   <p className="text-[6px] font-black text-amber-500 uppercase tracking-widest leading-none">{offer.title}</p>
-                   <h4 className="text-sm font-black text-white italic uppercase leading-tight mt-1">{offer.discount} DISCOUNT</h4>
+              <div key={offer.id} className={`min-w-[280px] h-36 relative rounded-2xl overflow-hidden border snap-center shadow-xl transition-all duration-500 ${theme === 'dark' ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-200'}`}>
+                <img src={offer.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50" alt="" />
+                <div className="absolute inset-0 p-6 flex flex-col justify-center bg-gradient-to-r from-black/80 to-transparent">
+                   <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest leading-none">{offer.title}</p>
+                   <h4 className="text-xl font-black text-white italic uppercase leading-tight mt-2">{offer.discount} OFF</h4>
                 </div>
               </div>
             ))}
@@ -88,23 +91,23 @@ export const HomeScreen: React.FC = () => {
         </section>
       )}
 
-      {/* 4. COMPACT 2-COLUMN SERVICES */}
-      <section className="px-4 space-y-2">
-        <div className="flex items-center justify-between px-1">
-           <h3 className="text-[7px] font-black text-white/40 uppercase tracking-[0.2em]">Select Service</h3>
-           <button onClick={() => navigate('/services')} className="text-[6px] font-black text-amber-500 uppercase tracking-widest">View All</button>
+      {/* 4. SERVICES - Headings Choti Kro */}
+      <section className="px-6 space-y-3">
+        <div className="flex items-center justify-between px-2">
+           <h3 className={`text-[9px] font-black uppercase tracking-[0.3em] ${theme === 'dark' ? 'text-white/40' : 'text-slate-400'}`}>Top Services</h3>
+           <button onClick={() => navigate('/services')} className="text-[9px] font-black text-amber-500 uppercase tracking-widest hover:underline">View Menu</button>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-4">
           {services.slice(0, 4).map(service => (
-            <div key={service.id} onClick={() => navigate('/booking', { state: { serviceId: service.id } })} className="glass-card rounded-xl p-2 space-y-1.5 border-white/5 active:scale-95 transition-all">
-              <div className="h-16 w-full rounded-lg overflow-hidden bg-zinc-900">
+            <div key={service.id} onClick={() => navigate('/booking', { state: { serviceId: service.id } })} className={`rounded-2xl p-3 space-y-3 border transition-all active:scale-95 shadow-md ${theme === 'dark' ? 'bg-zinc-900 border-white/5' : 'bg-white border-slate-200'}`}>
+              <div className="h-24 w-full rounded-xl overflow-hidden bg-slate-100 dark:bg-zinc-800">
                  <img src={service.imageUrl} className="w-full h-full object-cover" alt="" />
               </div>
-              <div className="px-0.5">
-                <h5 className="text-[7px] font-black text-white uppercase italic truncate leading-none">{service.name}</h5>
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-zinc-500 text-[5px] font-black uppercase leading-none">{service.duration}m</span>
-                  <span className="text-amber-500 font-black text-[7px] italic leading-none">{branding.currency} {service.price}</span>
+              <div className="px-1">
+                <h5 className={`text-[10px] font-black uppercase italic truncate leading-none ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{service.name}</h5>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-zinc-500 text-[8px] font-black uppercase">{service.duration}m</span>
+                  <span className="text-amber-500 font-black text-[10px] italic">{branding.currency} {service.price}</span>
                 </div>
               </div>
             </div>
@@ -112,38 +115,40 @@ export const HomeScreen: React.FC = () => {
         </div>
       </section>
 
-      {/* 5. TINY TEAM ROW */}
-      <section className="space-y-1.5">
-         <div className="px-5">
-            <h3 className="text-[7px] font-black text-white/40 uppercase tracking-[0.2em]">The Artisans</h3>
+      {/* 5. TEAM */}
+      <section className="space-y-3">
+         <div className="px-8">
+            <h3 className={`text-[9px] font-black uppercase tracking-[0.3em] ${theme === 'dark' ? 'text-white/40' : 'text-slate-400'}`}>The Artisans</h3>
          </div>
-         <div className="flex gap-3 overflow-x-auto px-4 pb-1 no-scrollbar">
+         <div className="flex gap-5 overflow-x-auto px-6 pb-2 no-scrollbar">
             {barbers.map(barber => (
-              <div key={barber.id} onClick={() => navigate('/barbers')} className="min-w-[50px] flex flex-col items-center gap-1 text-center">
-                <div className="w-10 h-10 rounded-full p-0.5 border border-white/5 bg-zinc-900 overflow-hidden">
-                    <img src={barber.imageUrl} className="w-full h-full rounded-full object-cover grayscale" alt="" />
+              <div key={barber.id} onClick={() => navigate('/barbers')} className="min-w-[80px] flex flex-col items-center gap-3 text-center group cursor-pointer">
+                <div className={`w-16 h-16 rounded-full p-1 border-2 transition-all group-hover:border-amber-500 shadow-xl ${theme === 'dark' ? 'bg-zinc-900 border-white/10' : 'bg-white border-slate-200'}`}>
+                    <img src={barber.imageUrl} className="w-full h-full rounded-full object-cover grayscale group-hover:grayscale-0" alt="" />
                 </div>
-                <p className="text-[6px] font-black text-white uppercase italic truncate w-10 leading-none">{barber.name.split(' ')[0]}</p>
+                <p className={`text-[9px] font-black uppercase italic truncate w-20 ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>{barber.name.split(' ')[0]}</p>
               </div>
             ))}
          </div>
       </section>
 
-      {/* 6. STUDIO INFO HUB */}
-      <section className="px-4 pb-4">
-        <div className="glass-card rounded-xl border-white/5 overflow-hidden flex flex-col divide-y divide-white/5">
-          <div className="p-2.5 flex items-center gap-2">
-             <MapPin size={10} className="text-amber-500" />
-             <p className="text-[7px] font-bold text-zinc-400 leading-tight italic truncate">{branding.address}</p>
+      {/* 6. STUDIO INFO */}
+      <section className="px-6 pb-8">
+        <div className={`rounded-2xl border overflow-hidden flex flex-col divide-y shadow-2xl transition-all duration-500 ${theme === 'dark' ? 'bg-zinc-900 border-white/5 divide-white/5' : 'bg-white border-slate-200 divide-slate-100'}`}>
+          <div className="p-4 flex items-center gap-4">
+             <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
+                <MapPin size={18} />
+             </div>
+             <p className={`text-[10px] font-bold leading-relaxed italic ${theme === 'dark' ? 'text-zinc-300' : 'text-slate-600'}`}>{branding.address}</p>
           </div>
-          <div className="p-2 bg-white/[0.02] flex gap-1.5">
-            <a href={`tel:${branding.contactPhone}`} className="flex-1 py-2 bg-zinc-900 rounded-lg flex items-center justify-center gap-1 border border-white/5 active:scale-95 transition-all">
-              <Phone size={8} className="text-amber-500" />
-              <span className="text-[6px] font-black uppercase text-white tracking-widest">Call</span>
+          <div className={`p-3 flex gap-3 ${theme === 'dark' ? 'bg-white/[0.02]' : 'bg-slate-50'}`}>
+            <a href={`tel:${branding.contactPhone}`} className={`flex-1 py-3.5 rounded-xl flex items-center justify-center gap-2 border transition-all active:scale-95 shadow-md ${theme === 'dark' ? 'bg-zinc-900 border-white/5 text-white' : 'bg-white border-slate-200 text-slate-800'}`}>
+              <Phone size={14} className="text-amber-500" />
+              <span className="text-[10px] font-black uppercase tracking-widest">Call</span>
             </a>
-            <a href={getWhatsAppLink(branding.whatsappNumber)} className="flex-1 py-2 bg-green-600/90 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition-all">
-              <MessageCircle size={8} className="text-white" />
-              <span className="text-[6px] font-black uppercase text-white tracking-widest">WhatsApp</span>
+            <a href={getWhatsAppLink(branding.whatsappNumber)} className="flex-1 py-3.5 bg-green-600 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md">
+              <MessageCircle size={14} className="text-white" />
+              <span className="text-[10px] font-black uppercase text-white tracking-widest">Chat</span>
             </a>
           </div>
         </div>
