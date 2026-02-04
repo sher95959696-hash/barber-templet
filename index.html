@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BarberPro | Premium Grooming</title>
+    <title>BarberPro | Elite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -13,24 +13,42 @@
           overflow-x: hidden; 
           background-color: #020202;
           -webkit-tap-highlight-color: transparent;
+          color: #e2e8f0;
+          letter-spacing: -0.01em;
+          transition: background-color 0.5s ease;
         }
         .mobile-screen {
             max-width: 480px;
             margin: 0 auto;
             min-height: 100vh;
-            background-color: #020202;
-            color: #f8fafc;
             position: relative;
         }
         ::-webkit-scrollbar { display: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        .gold-gradient {
-          background: linear-gradient(135deg, #D4AF37 0%, #C5A059 100%);
+        .gold-glow {
+          box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
         }
         
+        .glass-card {
+          background: rgba(255, 255, 255, 0.04);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .premium-gradient {
+          background: linear-gradient(135deg, #1a1a1a 0%, #050505 100%);
+        }
+
+        .gold-gradient-text {
+          background: linear-gradient(135deg, #D4AF37 0%, #F5E0A3 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        /* Ensure input text is always visible and large enough */
         input, select, textarea {
-          font-size: 16px !important;
+          font-size: 16px !important; /* Prevents auto-zoom on iOS and improves legibility */
         }
     </style>
 <script type="importmap">
