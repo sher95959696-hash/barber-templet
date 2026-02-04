@@ -14,7 +14,7 @@ import {
   limit,
   Timestamp
 } from 'firebase/firestore';
-import { db, requestForToken, isFirebaseConfigured } from '../firebase';
+import { db, isFirebaseConfigured } from '../firebase';
 import { BarberService, Barber, Appointment, Offer, BrandingConfig, GalleryImage } from '../types';
 import { DEFAULT_BRANDING } from '../constants';
 
@@ -37,6 +37,8 @@ interface AppState {
   notifications: AppNotification[];
   isDbConnected: boolean;
   isAdminAuthenticated: boolean;
+  theme: 'dark' | 'light';
+  toggleTheme: () => void;
   loginAdmin: (password: string) => boolean;
   logoutAdmin: () => void;
   updateBranding: (b: BrandingConfig) => Promise<void>;
@@ -65,6 +67,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isDbConnected, setIsDbConnected] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>((localStorage.getItem('app_theme') as any) || 'dark');
+
+  useEffect(() => {
+    localStorage.setItem('app_theme', theme);
+    document.documentElement.className = theme;
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
   useEffect(() => {
     if (!isFirebaseConfigured()) return;
@@ -158,7 +168,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{ 
       branding, services, barbers, offers, appointments, gallery, notifications, isDbConnected,
-      isAdminAuthenticated, loginAdmin, logoutAdmin,
+      isAdminAuthenticated, theme, toggleTheme, loginAdmin, logoutAdmin,
       updateBranding, addAppointment, updateAppointment, updateService, deleteService, updateBarber, deleteBarber, updateOffer, deleteOffer,
       addGalleryImage, deleteGalleryImage, markNotificationRead
     }}>
