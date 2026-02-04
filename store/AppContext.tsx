@@ -16,7 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db, requestForToken, isFirebaseConfigured } from '../firebase';
 import { BarberService, Barber, Appointment, Offer, BrandingConfig, GalleryImage } from '../types';
-import { DEFAULT_BRANDING, INITIAL_SERVICES, INITIAL_BARBERS, INITIAL_OFFERS } from '../constants';
+import { DEFAULT_BRANDING } from '../constants';
 
 interface AppNotification {
   id: string;
@@ -69,15 +69,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     if (!isFirebaseConfigured()) return;
 
-    const seedIfEmpty = async () => {
-      const brandRef = doc(db, "config", "branding");
-      const brandSnap = await getDoc(brandRef);
-      if (!brandSnap.exists()) {
-        await setDoc(brandRef, DEFAULT_BRANDING);
-      }
-    };
-    seedIfEmpty();
-
     const unsubBranding = onSnapshot(doc(db, "config", "branding"), (doc) => {
       if (doc.exists()) {
         setBranding(doc.data() as BrandingConfig);
@@ -105,16 +96,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setGallery(snap.docs.map(d => ({ id: d.id, ...d.data() } as GalleryImage)));
     });
 
-    const unsubNotes = onSnapshot(query(collection(db, "notifications"), orderBy("timestamp", "desc"), limit(20)), (snap) => {
-      setNotifications(snap.docs.map(d => ({ id: d.id, ...d.data() } as AppNotification)));
-    });
-
-    requestForToken().then(token => {
-      if (token) setDoc(doc(db, "fcm_tokens", token), { lastActive: Timestamp.now() }, { merge: true });
-    });
-
     return () => {
-      unsubBranding(); unsubServices(); unsubBarbers(); unsubOffers(); unsubApts(); unsubGallery(); unsubNotes();
+      unsubBranding(); unsubServices(); unsubBarbers(); unsubOffers(); unsubApts(); unsubGallery();
     };
   }, []);
 
@@ -135,13 +118,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addAppointment = async (a: Appointment) => { 
     const { id, ...data } = a;
     await addDoc(collection(db, "appointments"), data);
-    await addDoc(collection(db, "notifications"), {
-      title: "New Booking! 📅",
-      body: `${a.customerName} for ${a.date}`,
-      timestamp: Timestamp.now(),
-      type: 'booking',
-      read: false
-    });
   };
 
   const updateAppointment = async (id: string, status: 'confirmed' | 'cancelled') => {
@@ -150,34 +126,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateService = async (s: BarberService) => { 
     const { id, ...data } = s;
-    if (id.length > 15) await setDoc(doc(db, "services", id), data);
-    else await addDoc(collection(db, "services"), data);
+    await setDoc(doc(db, "services", id), data);
   };
 
   const deleteService = async (id: string) => await deleteDoc(doc(db, "services", id));
 
   const updateBarber = async (b: Barber) => { 
     const { id, ...data } = b;
-    if (id.length > 15) await setDoc(doc(db, "barbers", id), data);
-    else await addDoc(collection(db, "barbers"), data);
+    await setDoc(doc(db, "barbers", id), data);
   };
 
   const deleteBarber = async (id: string) => await deleteDoc(doc(db, "barbers", id));
 
   const updateOffer = async (o: Offer) => { 
     const { id, ...data } = o;
-    if (id.length > 15) await setDoc(doc(db, "offers", id), data);
-    else await addDoc(collection(db, "offers"), data);
+    await setDoc(doc(db, "offers", id), data);
   };
 
   const deleteOffer = async (id: string) => await deleteDoc(doc(db, "offers", id));
 
   const addGalleryImage = async (url: string) => {
-    await addDoc(collection(db, "gallery"), {
-      url,
-      category: 'Look',
-      timestamp: Timestamp.now()
-    });
+    await addDoc(collection(db, "gallery"), { url, category: 'Look', timestamp: Timestamp.now() });
   };
 
   const deleteGalleryImage = async (id: string) => await deleteDoc(doc(db, "gallery", id));
