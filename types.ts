@@ -45,10 +45,16 @@ export interface GalleryImage {
   category: string;
 }
 
+export interface ShopStat {
+  label: string;
+  value: string;
+}
+
 export interface BrandingConfig {
   shopName: string;
   shopSlogan: string;
   logoUrl: string;
+  heroImageUrl: string;
   primaryColor: string;
   secondaryColor: string;
   contactPhone: string;
@@ -58,6 +64,9 @@ export interface BrandingConfig {
   adminPassword?: string;
   cloudinaryCloudName?: string;
   cloudinaryUploadPreset?: string;
+  membershipTitle: string;
+  membershipSubtext: string;
+  stats: ShopStat[];
   operatingHours: {
     weekdays: string;
     weekends: string;
