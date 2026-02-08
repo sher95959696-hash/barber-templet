@@ -1,4 +1,3 @@
-
 name: Build Android App
 on:
   push:
@@ -28,29 +27,30 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Generate Mobile Assets
+      - name: Generate and Sync App Icons
         run: |
-          # Create temporary assets directory for the tool
+          # 1. Assets folder banana
           mkdir -p assets
           
+          # 2. Check karna ke icon.png mojood hai
           if [ -f "icon.png" ]; then
-            echo "✅ icon.png found. Generating mobile assets..."
+            echo "✅ icon.png found in root. Preparing for generation..."
             cp icon.png assets/icon.png
-            # Generate all Android icon sizes and splash screens from single icon.png
+            
+            # 3. Android icons generate karna (Capacitor Assets Tool)
+            # Is se mipmap folders (hdpi, xxhdpi etc) automatically upate ho jate hain
             npx @capacitor/assets generate --android --icon assets/icon.png
           else
-            echo "⚠️ icon.png NOT found in root folder. Using default Capacitor icons."
+            echo "❌ icon.png NOT FOUND! Root folder mein icon.png upload karein."
           fi
 
-      - name: Build Android with Capacitor
+      - name: Capacitor Android Build
         run: |
-          # Ensure android platform exists
+          # Android platform add/sync karna
           npx cap add android || true
-          
-          # Sync web code and new icons into the native project
           npx cap sync android
           
-          # Build the APK and Bundle
+          # Native project build karna
           cd android && ./gradlew assembleDebug && ./gradlew bundleRelease
 
       - name: Upload APK
