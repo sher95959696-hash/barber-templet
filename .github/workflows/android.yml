@@ -15,7 +15,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # Removed cache: 'npm' because package-lock.json is missing
 
       - name: Install Dependencies
         run: npm install --no-package-lock
@@ -28,6 +27,16 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
+
+      - name: Generate Mobile Assets
+        run: |
+          # Check if icon.png exists in root, otherwise try to use branding logo if possible
+          # Standard practice is icon.png in root
+          if [ -f "icon.png" ]; then
+            npx capacitor-assets generate --android
+          else
+            echo "⚠️ No icon.png found in root. App will use default Android icon."
+          fi
 
       - name: Build Android with Capacitor
         run: |
