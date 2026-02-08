@@ -30,18 +30,27 @@ jobs:
 
       - name: Generate Mobile Assets
         run: |
-          # Check if icon.png exists in root, otherwise try to use branding logo if possible
-          # Standard practice is icon.png in root
+          # Create temporary assets directory for the tool
+          mkdir -p assets
+          
           if [ -f "icon.png" ]; then
-            npx capacitor-assets generate --android
+            echo "✅ icon.png found. Generating mobile assets..."
+            cp icon.png assets/icon.png
+            # Generate all Android icon sizes and splash screens from single icon.png
+            npx @capacitor/assets generate --android --icon assets/icon.png
           else
-            echo "⚠️ No icon.png found in root. App will use default Android icon."
+            echo "⚠️ icon.png NOT found in root folder. Using default Capacitor icons."
           fi
 
       - name: Build Android with Capacitor
         run: |
+          # Ensure android platform exists
           npx cap add android || true
+          
+          # Sync web code and new icons into the native project
           npx cap sync android
+          
+          # Build the APK and Bundle
           cd android && ./gradlew assembleDebug && ./gradlew bundleRelease
 
       - name: Upload APK
