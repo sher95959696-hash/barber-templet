@@ -2,10 +2,10 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  // 1. appId: Har client ke liye unique hona chahiye (e.g., com.clientname.barbershop)
-  appId: 'com.barberpro.app', 
+  // UNIQUE App ID for the client
+  appId: 'com.barberpro.elite', 
   
-  // 2. appName: Ye wo naam hai jo phone pe icon ke niche nazar aayega
+  // Name displayed under the icon
   appName: 'BarberPro', 
   
   webDir: 'dist',
